@@ -16,6 +16,11 @@ if ! command -v tsc &>/dev/null || ! command -v node &>/dev/null; then
     exit 1
 fi
 
+if ! command -v g++ &>/dev/null; then
+    echo "G++ is not installed. Please install G++ to run .cpp files."
+    exit 1
+fi
+
 # Function to run the specified file
 run_file() {
     DIR=$1
@@ -35,15 +40,24 @@ run_file() {
         case $EXT in
             java)
                 javac "$FILE" && java -cp "$DIR" $(basename "$FILE" .java)
+                rm -f "$DIR"/*.class  # Clean up generated .class files
                 ;;
             py)
                 python3 "$FILE"
                 ;;
             ts)
                 tsc "$FILE" && node "${FILE%.ts}.js"
+                rm -f "${FILE%.ts}.js"  # Clean up generated .js files after execution
+                ;;
+            js)
+                node "$FILE"
+                ;;
+            cpp)
+                g++ "$FILE" -o "${FILE%.cpp}.out" && "./${FILE%.cpp}.out"
+                rm -f "${FILE%.cpp}.out"  # Clean up generated executable after execution
                 ;;
             *)
-                echo "Unsupported file extension. Please use 'java', 'py', or 'ts'."
+                echo "Unsupported file extension. Please use 'java', 'py', 'ts', 'js', or 'cpp'."
                 exit 1
                 ;;
         esac
@@ -52,7 +66,7 @@ run_file() {
 
 # Check for arguments
 if [ $# -ne 2 ]; then
-    echo "Usage: ./run.sh <directory_name> <file_extension (java|py|ts)>"
+    echo "Usage: ./run.sh <directory_name> <file_extension (java|py|ts|js|cpp)>"
     exit 1
 fi
 
